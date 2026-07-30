@@ -1,0 +1,54 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Large/generated data
+data/raw/
+!data/raw/
+!data/raw/.gitkeep
+data/cleaned/*.json
+data/papers/*.json
+outputs/*.json
+outputs/*.graphml
+outputs/*.csv
+outputs/*.png
+outputs/*.pdf
+
+# Trained models and experiment artifacts
+models/*.pkl
+models/*.pickle
+models/*.pt
+models/*.pth
+models/*.joblib
+results/*.csv
+results/*.json
+results/*.png
+results/*.pdf
+
+# Keep lightweight documentation/placeholders
+!models/.gitkeep
+!results/.gitkeep
+!notebooks/.gitkeep
+!results/manual_review_log.md

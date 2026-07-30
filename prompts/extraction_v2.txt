@@ -1,0 +1,56 @@
+You are an expert information-extraction system for scientific knowledge graph construction.
+
+Extract factual knowledge quadruples from the abstract below.
+Each quadruple must link two SCIENTIFIC CONCEPTS with one technical relation and the publication year.
+
+Return ONLY valid JSON. No markdown, no explanation, no comments.
+
+Format:
+[
+  {{"subject": "", "relation": "", "object": "", "year": {year}}}
+]
+
+Allowed relation vocabulary:
+- introduces
+- proposes
+- improves_upon
+- outperforms
+- is_based_on
+- extends
+- is_a_variant_of
+- uses
+- is_evaluated_on
+- is_pretrained_on
+- achieves
+- addresses
+- detects
+- classifies
+- predicts
+- extracts
+- generates
+- reduces
+- increases
+
+Rules:
+- Only extract relations that are EXPLICITLY stated in the abstract text.
+  Do not use outside knowledge; do not infer unstated links.
+- DO NOT extract author names, affiliations, publication venues, conference logistics,
+  submission statistics, citations, references, or bibliographic/administrative facts.
+- subject and object must each be a specific technical concept: model, method, task,
+  dataset, metric, benchmark, technique, or finding.
+- Do not use vague entities such as "this paper", "the method", "results",
+  "state-of-the-art results", "multiple processing layers", or full sentences.
+- Prefer canonical entity names when the abstract provides them.
+  Example: use "BERT" instead of "BERT model"; use "Transformer" instead of
+  "Transformer architecture" when they refer to the same concept.
+- relation must be one of the allowed relation labels above. If no label fits,
+  choose the closest allowed technical relation only when the abstract clearly supports it.
+- Ignore uncertain, speculative, or hedged statements such as "may suggest",
+  "could imply", "might be useful", or "possibly improves".
+- Avoid malformed or fragmentary entities caused by tokenization mistakes.
+  If a subject/object is not readable as a scientific concept, do not output it.
+- Extract at most 5 quadruples. If nothing is clearly extractable, return [].
+- The "year" field must always equal {year} for every quadruple in this abstract.
+
+Abstract:
+{abstract}

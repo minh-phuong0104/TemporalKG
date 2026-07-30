@@ -1,0 +1,93 @@
+{
+  "completed_years": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "current_year": null,
+  "current_token": null,
+  "year_state": {
+    "2014": {
+      "cap": 1500,
+      "token": null,
+      "count": 751,
+      "exhausted": true
+    },
+    "2015": {
+      "cap": 2000,
+      "token": null,
+      "count": 928,
+      "exhausted": true
+    },
+    "2016": {
+      "cap": 1500,
+      "token": null,
+      "count": 1154,
+      "exhausted": true
+    },
+    "2017": {
+      "cap": 1500,
+      "token": null,
+      "count": 1417,
+      "exhausted": true
+    },
+    "2018": {
+      "cap": 2500,
+      "token": "PCOKWVSKJJGM4TWNJNI3EUSQJIWVNUSRKBFEYK2JFUBHFI4VCIGVETGNCJJRGTMNRSAKJIMFOGFKKYMKUVM2VBMBLGFGTITJUKS2TANZIWZILCKSNQWQB7UOCRTA",
+      "count": 2000,
+      "exhausted": false
+    },
+    "2019": {
+      "cap": 2500,
+      "token": "PCOA3RZRBZAEAEAF2CV4RLYVE2Z3XLFLRDRNXGLJEQFHJYXOXTXD3WGYOY7QY4YHX7IHOYG4P37F2QENLLCKFGTYUJHWMNIHLV2AQSLKRG43IMRKWG7B6CQ4CT4A",
+      "count": 2500,
+      "exhausted": false
+    },
+    "2020": {
+      "cap": 2500,
+      "token": "PCOA3RZRB2ADACAF2CVTJTAO3KLENPEKOGQHYWCMDTKM26DXPXNXXKFL5V7IBFSEP3IZASHD63Z66SU4YEGJKEV5R6MBXN2JXBABC4BXGFSK2JSRNF5T6BJMCVPQ",
+      "count": 2000,
+      "exhausted": false
+    },
+    "2021": {
+      "cap": 2500,
+      "token": "PCOA3R53BWADADAFYBK2EV2T4RFWIVSBCS3GGN2ICRAIPWA5V25QPQV23MY3ABGYQUUYB7NW6PXYUORI6FEFJSCKC6ETMN6JTUNZTO52JPG5VNJYMN5T6ASICVOA",
+      "count": 2000,
+      "exhausted": false
+    },
+    "2022": {
+      "cap": 2500,
+      "token": "PCOKWVSKJJGM4TWNJNI3EUSQJIWVNUSRKBFEYK2JFUBHFI4VJSJIYTMNKMWI2TGSZRGM2LEASSSYLMLRJJNLFKLRUJYZVCLBJKZKDAMRMFVEVCSSNQWQB2EZCQ2Q",
+      "count": 2000,
+      "exhausted": false
+    },
+    "2023": {
+      "cap": 2500,
+      "token": "PCOKWVSKJJGM4TWNJNI3EUSQJIWVNUSRKBFEYK2JFUBHFI4VRQWUZDASKOGIYLANRSJNHDEMJRJ5HESTSNG4ZDOMSPGFEUQNSIGQZUWMFUWVEUUTSRRGWAPVBAKMC",
+      "count": 2000,
+      "exhausted": false
+    },
+    "2024": {
+      "cap": 1654,
+      "token": "PCOKWVSKJJGM4TWNJNI3EUSQJIWVNUSRKBFEYK2JFUBHFI4VBSJ5EUSNSOJUZTCNBWA5BWGUGLESQMOZYARMTSGSGDI4RTGU2LCNJXGIELCTYUJJWYLAB3UMCPJQ",
+      "count": 1154,
+      "exhausted": false
+    },
+    "2025": {
+      "cap": 1654,
+      "token": "PCOKWVSKJJGM4TWNJNI3EUSQJIWVNUSRKBFEYK2JFUBHFI4VBTGZGDKMKPJCZERMBXGRFTJMRUWZFERMKOJNHDBNJWJBGLOSZRGA3DCNSPGY3DMSSVRGWAPYUYKHG",
+      "count": 1154,
+      "exhausted": false
+    },
+    "2026": {
+      "cap": 1654,
+      "token": "PCOKWVSKJJGM4TWNJNI3EUSQJIWVNUSRKBFEYK2JFUBHFI4VRSG42LEMSOJJFTKSKMGUYTGSFTGQZTEMJXGZGUWNRSJ4ZTOTBRJFELGNKIWUYTCTSRRGWAPQCAKEU",
+      "count": 1154,
+      "exhausted": false
+    }
+  }
+}

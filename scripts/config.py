@@ -10,6 +10,7 @@ OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 
 RAW_PAPERS_FILE = RAW_DIR / "openalex_2000.json"
+RAW_PAPERS_FILE_S2 = RAW_DIR / "semanticscholar_papers.json"
 CLEANED_PAPERS_FILE = CLEANED_DIR / "papers_clean.json"
 
 QUADRUPLES_FILE = OUTPUTS_DIR / "quadruples.json"
@@ -30,3 +31,4 @@ SAMPLE_SIZE = 2000
 OLLAMA_MODEL = "gemma3:latest"
 DEFAULT_EXTRACT_LIMIT = 0  # 0 means extract all cleaned papers
 OPENALEX_API_KEY = os.getenv("OPENALEX_API_KEY")
+SEMANTIC_SCHOLAR_API_KEY = "s2k-sTNMnagJlF2kaiEW2nlybCG1ePEKR2NbrueyDljs"

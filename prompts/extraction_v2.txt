@@ -38,85 +38,80 @@ Allowed relation vocabulary:
 
 Rules:
 
+EXTRACTION PRIORITY:
+- Prefer extracting useful scientific relations over returning empty output.
+- If a sentence explicitly states that a method/technique is used for a task/problem, extract the relation.
+- Review papers describe established practices. Extract these as factual relations.
+- Do not avoid extraction simply because the paper is a review or survey.
+
 GENERAL EXTRACTION:
 - Only extract relations that are EXPLICITLY stated in the abstract text.
 - Do not use outside knowledge or infer unstated relationships.
 - If a relation is uncertain, speculative, or only implied, return nothing.
 - Extract at most 5 quadruples. If no valid relation exists, return [].
 
-FOR SURVEY / REVIEW PAPERS:
-- Survey papers describe established practices in a field.
-- Extract field-level relations when they connect a technical method/technique with a specific task/problem.
-- Acceptable patterns:
-  * "NLP techniques are used for suicide risk detection"
-  * "Deep learning models have been applied to clinical text analysis"
-  * "Transformer-based methods achieve state-of-the-art on NER"
-- Do NOT extract vague domain-to-domain claims like "NLP addresses healthcare".
-- Use relations: applies_to, uses, leverages, addresses, is_evaluated_on, is_based_on, achieves.
+ENTITY TYPES:
+Subject and object can be:
+- model, algorithm, method, technique, framework, system
+- dataset, benchmark, corpus
+- task, scientific problem, application area
+- metric, measurable finding, phenomenon
+- technical field when referring to a method family (e.g., "Deep Learning", "NLP", "Machine Learning")
+
+Avoid only truly generic concepts without technical meaning like "research", "science", "technology".
 
 ENTITY CONSTRAINTS:
-- Subject and object must be scientific concepts, including:
-  * model, algorithm, method, technique, framework, system
-  * dataset, benchmark, corpus
-  * task, application problem, use case
-  * metric, measurable finding, scientific phenomenon
-  * specific named entity (e.g., "BERT", "UMLS", "MIMIC-III")
 - Prefer canonical entity names when available.
   Example: Use "BERT" instead of "BERT model", use "Transformer" instead of "Transformer architecture"
-- Do not use vague entities:
-  "this paper", "the method", "the approach", "the results",
-  "research field", "application area", "multiple layers", or full sentences.
 - For tasks, use standard names:
   "named entity recognition", "sentiment analysis", "question answering",
   "clinical information extraction", "suicide risk detection"
-- Do not extract broad domain-only relations like "NLP addresses medicine".
-- Prefer concrete technical relationships:
-  method → task, model → dataset, technique → problem, system → metric.
+- Do not use vague entities:
+  "this paper", "the method", "the approach", "the results",
+  "multiple layers", or full sentences.
+
+VALID ENTITY EXAMPLES:
+"Deep Learning" (as a method family)
+"Natural Language Processing" (as a technique field)
+"sentiment analysis" (as a task)
+"suicide risk" (as a detection target)
+"clinical text" (as a data type)
+"MIMIC-III" (as a dataset)
+"BERT" (as a model)
 
 RELATION CONSTRAINTS:
 - relation must be exactly one of the allowed relation labels.
 - Choose a relation only when the abstract clearly supports it.
 - Avoid forcing relations when no suitable label exists.
 
+VALID RELATION PATTERNS:
+Accept these patterns when explicitly stated:
+- Method family → task: "Deep Learning applies_to named entity recognition"
+- Technique → problem: "NLP analyzes clinical text"
+- Method → detection target: "Machine Learning detects suicide risk"
+- Model → dataset: "BERT is_evaluated_on GLUE benchmark"
+- Method → application: "NLP techniques are used for screening"
+
 ENTITY VALIDATION:
-- Reject entities that describe:
-  difficulty, quality, importance, outcome magnitude, or abstract concepts.
-
-Reject examples:
-"laborious analysis"
-"better performance"
-"high quality inference"
-"depth of understanding"
-"scientific issues"
-"research development"
-
-- The subject should usually be an active technical method, model,
-algorithm, system, dataset, benchmark, or technique.
+- Reject entities that describe abstract qualities or magnitudes:
+  "laborious analysis", "better performance", "high quality",
+  "depth of understanding", "scientific issues", "research development"
 
 - Data sources alone cannot perform actions.
-Reject:
-"social media data detects suicide risk"
-
-Prefer:
-"NLP model detects suicide risk"
+  Reject: "social media data detects suicide risk"
+  Accept: "NLP analyzes social media data"
 
 RELATION VALIDATION:
-- For detects, predicts, classifies, extracts, generates:
-  the subject must be a computational method, model, algorithm, or technique.
-  Methods and frameworks are acceptable as subjects.
+- For detects, predicts, classifies, extracts, generates, analyzes:
+  the subject must be a computational method, technique, model, algorithm, or method family.
+  Technical fields like "NLP", "Deep Learning", "Machine Learning" are acceptable subjects
+  when they represent a family of methods.
 
 - For increases, reduces, improves_upon, outperforms:
   only use when the abstract reports a direct measured comparison.
 
-- For applies_to, uses, leverages, analyzes:
-  use for established practices described in surveys or reviews
-  when connecting methods/techniques to tasks/problems.
+- For applies_to, uses, leverages, integrates:
+  use for established practices, especially in survey/review papers.
 
 Do not extract from speculative language:
-"potential"
-"promise"
-"can help"
-"may"
-"could"
-"likely"
-"tends to"
+"potential", "promise", "can help", "may", "could", "likely", "tends to"

@@ -1,13 +1,14 @@
 You are an expert information-extraction system for scientific knowledge graph construction.
 
-Extract factual knowledge quadruples from the abstract below.
+Extract factual knowledge quadruples from the scientific abstract provided at the end of this prompt.
+
 Each quadruple must link two SCIENTIFIC CONCEPTS with one technical relation and the publication year.
 
 Return ONLY valid JSON. No markdown, no explanation, no comments.
 
 Format:
 [
-  {{"subject": "", "relation": "", "object": "", "year": 2018}}
+  {{"subject": "", "relation": "", "object": "", "year": {year}}}
 ]
 
 Allowed relation vocabulary:
@@ -36,82 +37,198 @@ Allowed relation vocabulary:
 - leverages
 - analyzes
 
-Rules:
+==================================================
+EXTRACTION OBJECTIVE
+==================================================
 
-EXTRACTION PRIORITY:
-- Prefer extracting useful scientific relations over returning empty output.
-- If a sentence explicitly states that a method/technique is used for a task/problem, extract the relation.
-- Review papers describe established practices. Extract these as factual relations.
-- Do not avoid extraction simply because the paper is a review or survey.
+Extract useful scientific knowledge graph relations.
 
-GENERAL EXTRACTION:
-- Only extract relations that are EXPLICITLY stated in the abstract text.
-- Do not use outside knowledge or infer unstated relationships.
-- If a relation is uncertain, speculative, or only implied, return nothing.
-- Extract at most 5 quadruples. If no valid relation exists, return [].
+Prefer extracting valid relations instead of returning an empty list.
 
-ENTITY TYPES:
-Subject and object can be:
-- model, algorithm, method, technique, framework, system
-- dataset, benchmark, corpus
-- task, scientific problem, application area
-- metric, measurable finding, phenomenon
-- technical field when referring to a method family (e.g., "Deep Learning", "NLP", "Machine Learning")
+However:
+- Only extract relations explicitly supported by the abstract.
+- Do not use outside knowledge.
+- Do not infer relationships that are not stated.
+- If no valid relation exists, return [].
 
-Avoid only truly generic concepts without technical meaning like "research", "science", "technology".
+Extract maximum 5 quadruples.
 
-ENTITY CONSTRAINTS:
-- Prefer canonical entity names when available.
-  Example: Use "BERT" instead of "BERT model", use "Transformer" instead of "Transformer architecture"
-- For tasks, use standard names:
-  "named entity recognition", "sentiment analysis", "question answering",
-  "clinical information extraction", "suicide risk detection"
-- Do not use vague entities:
-  "this paper", "the method", "the approach", "the results",
-  "multiple layers", or full sentences.
+==================================================
+ENTITY RULES
+==================================================
 
-VALID ENTITY EXAMPLES:
-"Deep Learning" (as a method family)
-"Natural Language Processing" (as a technique field)
-"sentiment analysis" (as a task)
-"suicide risk" (as a detection target)
-"clinical text" (as a data type)
-"MIMIC-III" (as a dataset)
-"BERT" (as a model)
+Subject and object must be specific scientific concepts.
 
-RELATION CONSTRAINTS:
-- relation must be exactly one of the allowed relation labels.
-- Choose a relation only when the abstract clearly supports it.
-- Avoid forcing relations when no suitable label exists.
+Allowed entity types:
 
-VALID RELATION PATTERNS:
-Accept these patterns when explicitly stated:
-- Method family → task: "Deep Learning applies_to named entity recognition"
-- Technique → problem: "NLP analyzes clinical text"
-- Method → detection target: "Machine Learning detects suicide risk"
-- Model → dataset: "BERT is_evaluated_on GLUE benchmark"
-- Method → application: "NLP techniques are used for screening"
+- model
+- algorithm
+- method
+- technique
+- framework
+- system
+- dataset
+- benchmark
+- corpus
+- task
+- scientific problem
+- application problem
+- metric
+- measurable finding
+- technical phenomenon
 
-ENTITY VALIDATION:
-- Reject entities that describe abstract qualities or magnitudes:
-  "laborious analysis", "better performance", "high quality",
-  "depth of understanding", "scientific issues", "research development"
+Technical method families are allowed:
+- Natural Language Processing
+- Deep Learning
+- Machine Learning
+- Transformer
 
-- Data sources alone cannot perform actions.
-  Reject: "social media data detects suicide risk"
-  Accept: "NLP analyzes social media data"
+Examples of valid entities:
 
-RELATION VALIDATION:
-- For detects, predicts, classifies, extracts, generates, analyzes:
-  the subject must be a computational method, technique, model, algorithm, or method family.
-  Technical fields like "NLP", "Deep Learning", "Machine Learning" are acceptable subjects
-  when they represent a family of methods.
+"Deep Learning"
+"Natural Language Processing"
+"BERT"
+"Transformer"
+"named entity recognition"
+"sentiment analysis"
+"question answering"
+"clinical information extraction"
+"suicide risk detection"
+"MIMIC-III"
 
-- For increases, reduces, improves_upon, outperforms:
-  only use when the abstract reports a direct measured comparison.
+Do NOT extract:
 
-- For applies_to, uses, leverages, integrates:
-  use for established practices, especially in survey/review papers.
+- this paper
+- the authors
+- the approach
+- the method
+- the results
+- research field
+- technology
+- science
+- better performance
+- high quality
+- important issues
 
-Do not extract from speculative language:
-"potential", "promise", "can help", "may", "could", "likely", "tends to"
+==================================================
+RELATION RULES
+==================================================
+
+Use only relations from the allowed vocabulary.
+
+Valid examples:
+
+Deep Learning
+--[applies_to]-->
+named entity recognition
+
+
+Natural Language Processing
+--[analyzes]-->
+clinical text
+
+
+Machine Learning
+--[detects]-->
+suicide risk
+
+
+BERT
+--[is_evaluated_on]-->
+GLUE benchmark
+
+
+Transformer
+--[is_based_on]-->
+attention mechanism
+
+
+Only use:
+
+detects / predicts / classifies / extracts / generates / analyzes
+
+when the subject is an actual computational method, model, algorithm,
+or technical method family.
+
+Only use:
+
+improves_upon / outperforms / increases / reduces
+
+when the abstract explicitly reports a measured comparison.
+
+Do not create improvement relations from words like:
+- better
+- effective
+- promising
+- useful
+- powerful
+
+unless a direct comparison is reported.
+
+==================================================
+REVIEW AND SURVEY PAPER RULES
+==================================================
+
+For review papers, extract established technical practices.
+
+Examples:
+
+"Deep learning techniques are widely used for medical text analysis"
+
+Valid:
+
+[
+ {{"subject":"Deep Learning",
+   "relation":"uses",
+   "object":"medical text analysis",
+   "year": {year}}}
+]
+
+
+"NLP methods have been applied to suicide risk detection"
+
+Valid:
+
+[
+ {{"subject":"Natural Language Processing",
+   "relation":"applies_to",
+   "object":"suicide risk detection",
+   "year": {year}}}
+]
+
+
+Do not extract vague relations:
+
+"NLP addresses healthcare"
+
+Invalid because healthcare is too broad.
+
+==================================================
+SPECULATION FILTER
+==================================================
+
+Do not extract from speculative statements:
+
+- potential
+- promise
+- can help
+- may
+- might
+- could
+- likely
+- tends to
+- possible
+
+==================================================
+ABSTRACT TO ANALYZE
+==================================================
+
+{abstract}
+
+==================================================
+PUBLICATION YEAR
+==================================================
+
+{year}
+
+Return JSON only.

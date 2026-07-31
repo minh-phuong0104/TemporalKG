@@ -7,7 +7,7 @@ Return ONLY valid JSON. No markdown, no explanation, no comments.
 
 Format:
 [
-  {"subject": "", "relation": "", "object": "", "year": 2018}
+  {{"subject": "", "relation": "", "object": "", "year": 2018}}
 ]
 
 Allowed relation vocabulary:
@@ -30,6 +30,11 @@ Allowed relation vocabulary:
 - generates
 - reduces
 - increases
+- applies_to
+- supports
+- integrates
+- leverages
+- analyzes
 
 Rules:
 
@@ -40,37 +45,33 @@ GENERAL EXTRACTION:
 - Extract at most 5 quadruples. If no valid relation exists, return [].
 
 FOR SURVEY / REVIEW PAPERS:
-- Survey papers often describe what a field "addresses", what methods "are used" for a task, or what techniques "are applied to" a problem.
-- Extract these META-LEVEL relations when explicitly stated:
-  * "addresses" — a research area targets a specific problem or challenge.
-  * "uses" — a task or domain commonly employs a certain technique, method, or tool.
-  * "is_evaluated_on" — a method is typically benchmarked on a specific dataset.
-  * "is_based_on" — a class of approaches builds on a foundational method.
-- Only extract if the abstract makes a clear, general claim about what the field does (e.g., "NLP techniques are used for suicide risk detection").
-- Do not extract vague domain-to-domain claims like "NLP addresses medicine".
-- Prefer specific technical entities even in reviews.
+- Survey papers describe established practices in a field.
+- Extract field-level relations when they connect a technical method/technique with a specific task/problem.
+- Acceptable patterns:
+  * "NLP techniques are used for suicide risk detection"
+  * "Deep learning models have been applied to clinical text analysis"
+  * "Transformer-based methods achieve state-of-the-art on NER"
+- Do NOT extract vague domain-to-domain claims like "NLP addresses healthcare".
+- Use relations: applies_to, uses, leverages, addresses, is_evaluated_on, is_based_on, achieves.
 
 ENTITY CONSTRAINTS:
-- Subject and object must each be a specific scientific concept:
-  model, algorithm, method, technique, dataset, benchmark, task, metric, or concrete finding.
+- Subject and object must be scientific concepts, including:
+  * model, algorithm, method, technique, framework, system
+  * dataset, benchmark, corpus
+  * task, application problem, use case
+  * metric, measurable finding, scientific phenomenon
+  * specific named entity (e.g., "BERT", "UMLS", "MIMIC-III")
 - Prefer canonical entity names when available.
-  Example:
-  Use "BERT" instead of "BERT model".
-  Use "Transformer" instead of "Transformer architecture".
+  Example: Use "BERT" instead of "BERT model", use "Transformer" instead of "Transformer architecture"
 - Do not use vague entities:
   "this paper", "the method", "the approach", "the results",
   "research field", "application area", "multiple layers", or full sentences.
-- Do not extract broad domain-to-domain relations.
-  Examples to avoid:
-  "NLP addresses medicine"
-  "machine learning improves healthcare"
-  "deep learning uses education"
+- For tasks, use standard names:
+  "named entity recognition", "sentiment analysis", "question answering",
+  "clinical information extraction", "suicide risk detection"
+- Do not extract broad domain-only relations like "NLP addresses medicine".
 - Prefer concrete technical relationships:
-  model → dataset,
-  method → task,
-  algorithm → metric,
-  technique → finding,
-  system → benchmark.
+  method → task, model → dataset, technique → problem, system → metric.
 
 RELATION CONSTRAINTS:
 - relation must be exactly one of the allowed relation labels.
@@ -100,15 +101,18 @@ Prefer:
 "NLP model detects suicide risk"
 
 RELATION VALIDATION:
-- Only use:
-  detects, predicts, classifies, extracts, generates
-when the subject is an actual computational method/system.
+- For detects, predicts, classifies, extracts, generates:
+  the subject must be a computational method, model, algorithm, or technique.
+  Methods and frameworks are acceptable as subjects.
 
-- Only use:
-  increases, reduces, improves_upon, outperforms
-when the abstract reports a direct measured comparison.
+- For increases, reduces, improves_upon, outperforms:
+  only use when the abstract reports a direct measured comparison.
 
-Do not extract from:
+- For applies_to, uses, leverages, analyzes:
+  use for established practices described in surveys or reviews
+  when connecting methods/techniques to tasks/problems.
+
+Do not extract from speculative language:
 "potential"
 "promise"
 "can help"

@@ -66,19 +66,43 @@ RELATION CONSTRAINTS:
 - Choose a relation only when the abstract clearly supports it.
 - Avoid forcing relations when no suitable label exists.
 
-QUALITY FILTER:
-- Do not extract author names, affiliations, publication venues, conferences,
-  citations, references, submission information, or administrative facts.
-- Ignore uncertain phrases:
-  "may suggest", "could imply", "might be useful", "possibly improves".
-- Avoid malformed or incomplete entities caused by tokenization errors.
-- Avoid using general concepts such as:
-  "research", "technology", "field", "knowledge", "understanding",
-  "analysis", "development" as entities unless they represent a concrete technical method or finding.
-- Avoid outputting performance claims without a measurable technical target.
+ENTITY VALIDATION:
+- Reject entities that describe:
+  difficulty, quality, importance, outcome magnitude, or abstract concepts.
 
-TEMPORAL CONSTRAINT:
-- The "year" field must always equal {year} for every quadruple extracted from this abstract.
+Reject examples:
+"laborious analysis"
+"better performance"
+"high quality inference"
+"depth of understanding"
+"scientific issues"
+"research development"
 
-Abstract:
-{abstract}
+- The subject should usually be an active technical method, model,
+algorithm, system, dataset, benchmark, or technique.
+
+- Data sources alone cannot perform actions.
+Reject:
+"social media data detects suicide risk"
+
+Prefer:
+"NLP model detects suicide risk"
+
+
+RELATION VALIDATION:
+- Only use:
+  detects, predicts, classifies, extracts, generates
+when the subject is an actual computational method/system.
+
+- Only use:
+  increases, reduces, improves_upon, outperforms
+when the abstract reports a direct measured comparison.
+
+Do not extract from:
+"potential"
+"promise"
+"can help"
+"may"
+"could"
+"likely"
+"tends to"

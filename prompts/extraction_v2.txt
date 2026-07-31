@@ -32,25 +32,53 @@ Allowed relation vocabulary:
 - increases
 
 Rules:
+
+GENERAL EXTRACTION:
 - Only extract relations that are EXPLICITLY stated in the abstract text.
-  Do not use outside knowledge; do not infer unstated links.
-- DO NOT extract author names, affiliations, publication venues, conference logistics,
-  submission statistics, citations, references, or bibliographic/administrative facts.
-- subject and object must each be a specific technical concept: model, method, task,
-  dataset, metric, benchmark, technique, or finding.
-- Do not use vague entities such as "this paper", "the method", "results",
-  "state-of-the-art results", "multiple processing layers", or full sentences.
-- Prefer canonical entity names when the abstract provides them.
-  Example: use "BERT" instead of "BERT model"; use "Transformer" instead of
-  "Transformer architecture" when they refer to the same concept.
-- relation must be one of the allowed relation labels above. If no label fits,
-  choose the closest allowed technical relation only when the abstract clearly supports it.
-- Ignore uncertain, speculative, or hedged statements such as "may suggest",
-  "could imply", "might be useful", or "possibly improves".
-- Avoid malformed or fragmentary entities caused by tokenization mistakes.
-  If a subject/object is not readable as a scientific concept, do not output it.
-- Extract at most 5 quadruples. If nothing is clearly extractable, return [].
-- The "year" field must always equal {year} for every quadruple in this abstract.
+- Do not use outside knowledge or infer unstated relationships.
+- If a relation is uncertain, speculative, or only implied, return nothing.
+- Extract at most 5 quadruples. If no valid relation exists, return [].
+
+ENTITY CONSTRAINTS:
+- Subject and object must each be a specific scientific concept:
+  model, algorithm, method, technique, dataset, benchmark, task, metric, or concrete finding.
+- Prefer canonical entity names when available.
+  Example:
+  Use "BERT" instead of "BERT model".
+  Use "Transformer" instead of "Transformer architecture".
+- Do not use vague entities:
+  "this paper", "the method", "the approach", "the results",
+  "research field", "application area", "multiple layers", or full sentences.
+- Do not extract broad domain-to-domain relations.
+  Examples to avoid:
+  "NLP addresses medicine"
+  "machine learning improves healthcare"
+  "deep learning uses education"
+- Prefer concrete technical relationships:
+  model → dataset,
+  method → task,
+  algorithm → metric,
+  technique → finding,
+  system → benchmark.
+
+RELATION CONSTRAINTS:
+- relation must be exactly one of the allowed relation labels.
+- Choose a relation only when the abstract clearly supports it.
+- Avoid forcing relations when no suitable label exists.
+
+QUALITY FILTER:
+- Do not extract author names, affiliations, publication venues, conferences,
+  citations, references, submission information, or administrative facts.
+- Ignore uncertain phrases:
+  "may suggest", "could imply", "might be useful", "possibly improves".
+- Avoid malformed or incomplete entities caused by tokenization errors.
+- Avoid using general concepts such as:
+  "research", "technology", "field", "knowledge", "understanding",
+  "analysis", "development" as entities unless they represent a concrete technical method or finding.
+- Avoid outputting performance claims without a measurable technical target.
+
+TEMPORAL CONSTRAINT:
+- The "year" field must always equal {year} for every quadruple extracted from this abstract.
 
 Abstract:
 {abstract}

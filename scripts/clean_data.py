@@ -22,20 +22,18 @@ if __package__ in {None, ""}:
 from scripts.config import CLEANED_PAPERS_FILE, RAW_PAPERS_FILE_S2
 
 MIN_ABSTRACT_WORDS = 20
+MAX_YEAR = 2025   # Chỉ giữ dữ liệu lịch sử
 
 
 def normalize_text(value: str) -> str:
-    """Xóa khoảng trắng thừa và ký tự xuống dòng."""
     return re.sub(r"\s+", " ", value or "").strip()
 
 
 def normalize_title(value: str) -> str:
-    """Chuẩn hóa tiêu đề về chữ thường để so sánh chống trùng lặp."""
     return normalize_text(value).casefold()
 
 
 def paper_key(paper: dict) -> str:
-    """Tạo khóa duy nhất (Unique Key) cho mỗi bài báo để lọc trùng."""
     paper_id = normalize_text(str(paper.get("id", "")))
     if paper_id:
         return f"id:{paper_id}"
@@ -45,26 +43,43 @@ def paper_key(paper: dict) -> str:
 def clean_papers(papers: list[dict]) -> tuple[list[dict], dict]:
     clean = []
     seen = set()
+
     stats = {
         "input": len(papers),
         "duplicates_removed": 0,
         "missing_required_fields": 0,
         "short_or_empty_abstract": 0,
+        "future_papers_removed": 0,
     }
 
     for paper in papers:
+
         title = normalize_text(paper.get("title", ""))
         abstract = normalize_text(paper.get("abstract", ""))
         year = paper.get("year")
 
+        # Thiếu thông tin bắt buộc
         if not title or not abstract or year is None:
             stats["missing_required_fields"] += 1
             continue
 
+        try:
+            year = int(year)
+        except Exception:
+            stats["missing_required_fields"] += 1
+            continue
+
+        # Chỉ dùng dữ liệu lịch sử
+        if year > MAX_YEAR:
+            stats["future_papers_removed"] += 1
+            continue
+
+        # Abstract quá ngắn
         if len(abstract.split()) < MIN_ABSTRACT_WORDS:
             stats["short_or_empty_abstract"] += 1
             continue
 
+        # Trùng bài
         key = paper_key(paper)
         if key in seen:
             stats["duplicates_removed"] += 1
@@ -75,7 +90,7 @@ def clean_papers(papers: list[dict]) -> tuple[list[dict], dict]:
         clean.append({
             "id": normalize_text(str(paper.get("id", ""))) or title,
             "title": title,
-            "year": int(year),
+            "year": year,
             "abstract": abstract,
             "cited_by_count": paper.get(
                 "citationCount",
@@ -84,10 +99,12 @@ def clean_papers(papers: list[dict]) -> tuple[list[dict], dict]:
         })
 
     stats["output"] = len(clean)
+
     return clean, stats
 
 
 def main() -> None:
+
     parser = argparse.ArgumentParser(
         description="Clean raw Semantic Scholar paper records."
     )
@@ -109,10 +126,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.input.exists():
-        raise SystemExit(f"❌ Input file not found: {args.input}")
+        raise SystemExit(f"Input file not found: {args.input}")
 
-    print(f"🧹 Reading raw Semantic Scholar papers from:")
-    print(f"   {args.input}")
+    print(f"Reading Semantic Scholar papers from:")
+    print(args.input)
 
     with open(args.input, "r", encoding="utf-8") as f:
         papers = json.load(f)
@@ -125,21 +142,22 @@ def main() -> None:
         json.dump(clean, f, ensure_ascii=False, indent=2)
 
     print("\n========== CLEANING SUMMARY ==========")
-    print(f"Input papers:        {stats['input']}")
-    print(f"Duplicates removed:  {stats['duplicates_removed']}")
-    print(f"Missing fields:      {stats['missing_required_fields']}")
-    print(f"Short abstracts:     {stats['short_or_empty_abstract']}")
-    print(f"Clean papers:        {stats['output']}")
-    print(f"Saved to:            {args.output}")
+    print(f"Input papers:         {stats['input']}")
+    print(f"Duplicates removed:   {stats['duplicates_removed']}")
+    print(f"Missing fields:       {stats['missing_required_fields']}")
+    print(f"Short abstracts:      {stats['short_or_empty_abstract']}")
+    print(f"Future papers:        {stats['future_papers_removed']}")
+    print(f"Clean papers:         {stats['output']}")
+    print(f"Saved to:             {args.output}")
 
     print("\nPaper distribution by year:")
-    if clean:
-        years = [p["year"] for p in clean]
-        counts = Counter(years)
 
-        for y in sorted(counts):
-            pct = counts[y] * 100 / len(clean)
-            print(f"  {y}: {counts[y]} papers ({pct:.1f}%)")
+    if clean:
+        counts = Counter(p["year"] for p in clean)
+
+        for year in sorted(counts):
+            pct = counts[year] * 100 / len(clean)
+            print(f"  {year}: {counts[year]} papers ({pct:.1f}%)")
     else:
         print("  No valid papers found.")
 

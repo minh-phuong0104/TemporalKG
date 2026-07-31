@@ -20,6 +20,10 @@ from scripts.config import (
 # Có thể override bằng biến môi trường OPENAI_MODEL hoặc --model.
 DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.5")
 
+# Endpoint trung gian (proxy) thay vì api.openai.com mặc định.
+# Có thể override bằng biến môi trường OPENAI_BASE_URL hoặc --base-url.
+DEFAULT_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.xah.io/v1")
+
 # Sau mỗi bao nhiêu bài thì ghi checkpoint xuống đĩa.
 # Để 1 nghĩa là ghi sau MỖI bài (an toàn nhất, chậm hơn chút do I/O).
 DEFAULT_CHECKPOINT_EVERY = 20
@@ -45,17 +49,18 @@ def load_prompt_template(prompt_file: Path) -> str:
     return prompt_file.read_text(encoding="utf-8")
 
 
-def get_openai_client():
-    """Khởi tạo client OpenAI. Cần biến môi trường OPENAI_API_KEY."""
+def get_openai_client(base_url: str):
+    """Khởi tạo client OpenAI, trỏ tới base_url (mặc định là proxy xah.io).
+    Cần biến môi trường OPENAI_API_KEY."""
     from openai import OpenAI
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError(
             "Thiếu OPENAI_API_KEY. Hãy set biến môi trường trước khi chạy, "
-            "ví dụ: export OPENAI_API_KEY='sk-...'"
+            "ví dụ: export OPENAI_API_KEY='...'"
         )
-    return OpenAI(api_key=api_key)
+    return OpenAI(api_key=api_key, base_url=base_url)
 
 
 def save_json(path: Path, data) -> None:
@@ -129,6 +134,8 @@ def main() -> None:
                          help="Đường dẫn file checkpoint. Mặc định: <output>.checkpoint.json")
     parser.add_argument("--prompt", type=Path, default=DEFAULT_PROMPT_FILE)
     parser.add_argument("--model", default=DEFAULT_OPENAI_MODEL)
+    parser.add_argument("--base-url", default=DEFAULT_BASE_URL,
+                         help="Endpoint API (mặc định: proxy xah.io). Đổi lại nếu muốn dùng thẳng api.openai.com.")
     parser.add_argument("--limit", type=int, default=DEFAULT_EXTRACT_LIMIT, help="Max papers to extract. Use 0 for all.")
     parser.add_argument("--checkpoint-every", type=int, default=DEFAULT_CHECKPOINT_EVERY,
                          help="Ghi checkpoint sau mỗi N bài (mặc định 20). Đặt 1 để ghi sau mỗi bài.")
@@ -145,7 +152,8 @@ def main() -> None:
         papers = papers[:args.limit]
 
     prompt_template = load_prompt_template(args.prompt)
-    client = get_openai_client()
+    print(f"[INFO] Dùng endpoint: {args.base_url} | model: {args.model}")
+    client = get_openai_client(args.base_url)
 
     # --- Resume: nạp checkpoint cũ (nếu có) và xác định các paper đã xử lý rồi ---
     all_quadruples = [] if args.no_resume else load_checkpoint(checkpoint_path)

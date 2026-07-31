@@ -86,8 +86,12 @@ def load_checkpoint(checkpoint_path: Path) -> list:
 
 
 def extract_from_abstract(abstract: str, year: int, prompt_template: str, model: str, client,
-                           max_retries: int = 3) -> list:
+                           max_retries: int = 3, debug: bool = False) -> list:
     prompt = prompt_template.format(year=year, abstract=abstract)
+
+    if debug:
+        print(f"  [DEBUG] abstract length: {len(abstract or '')} chars")
+        print(f"  [DEBUG] prompt preview:\n{prompt[:500]}")
 
     last_error = None
     for attempt in range(1, max_retries + 1):
@@ -99,6 +103,17 @@ def extract_from_abstract(abstract: str, year: int, prompt_template: str, model:
                 max_tokens=800,       # tránh bị cắt giữa JSON với output dài
             )
             raw_text = response.choices[0].message.content
+
+            if debug:
+                print(f"  [DEBUG] finish_reason: {response.choices[0].finish_reason}")
+                print(f"  [DEBUG] raw_text repr: {raw_text!r}")
+
+            if not raw_text:
+                print("  [WARNING] Model trả về content rỗng (None/'').")
+                if debug:
+                    print(f"  [DEBUG] full response object: {response}")
+                return []
+
             cleaned = clean_json_text(raw_text)
 
             try:
@@ -106,6 +121,8 @@ def extract_from_abstract(abstract: str, year: int, prompt_template: str, model:
                 if not isinstance(parsed, list):
                     print("  [WARNING] Model did not return a JSON list, skipping.")
                     return []
+                if debug and len(parsed) == 0:
+                    print("  [DEBUG] Model trả về list rỗng '[]' một cách hợp lệ (không tìm thấy quan hệ nào).")
                 return parsed
             except json.JSONDecodeError:
                 print(f"  [WARNING] Invalid JSON, raw output was:\n  {raw_text[:300]}")
@@ -141,6 +158,8 @@ def main() -> None:
                          help="Ghi checkpoint sau mỗi N bài (mặc định 20). Đặt 1 để ghi sau mỗi bài.")
     parser.add_argument("--no-resume", action="store_true",
                          help="Bỏ qua checkpoint cũ, chạy lại từ đầu (mặc định sẽ tự resume nếu có checkpoint).")
+    parser.add_argument("--debug", action="store_true",
+                         help="In chi tiết abstract, prompt, raw response để debug vì sao ra 0 quadruples.")
     args = parser.parse_args()
 
     checkpoint_path = args.checkpoint or default_checkpoint_path(args.output)
@@ -184,7 +203,8 @@ def main() -> None:
             print("=" * 60)
 
             try:
-                quads = extract_from_abstract(paper["abstract"], paper["year"], prompt_template, args.model, client)
+                quads = extract_from_abstract(paper["abstract"], paper["year"], prompt_template, args.model, client,
+                                               debug=args.debug)
             except Exception as e:
                 # Lỗi nghiêm trọng (vd hết quota): lưu checkpoint rồi dừng hẳn, không chạy tiếp
                 print(f"[FATAL] Dừng chạy do lỗi: {e}")

@@ -7,7 +7,7 @@ Return ONLY valid JSON. No markdown, no explanation, no comments.
 
 Format:
 [
-  {{"subject": "", "relation": "", "object": "", "year": {year}}}
+  {"subject": "", "relation": "", "object": "", "year": 2018}
 ]
 
 Allowed relation vocabulary:
@@ -38,6 +38,17 @@ GENERAL EXTRACTION:
 - Do not use outside knowledge or infer unstated relationships.
 - If a relation is uncertain, speculative, or only implied, return nothing.
 - Extract at most 5 quadruples. If no valid relation exists, return [].
+
+FOR SURVEY / REVIEW PAPERS:
+- Survey papers often describe what a field "addresses", what methods "are used" for a task, or what techniques "are applied to" a problem.
+- Extract these META-LEVEL relations when explicitly stated:
+  * "addresses" — a research area targets a specific problem or challenge.
+  * "uses" — a task or domain commonly employs a certain technique, method, or tool.
+  * "is_evaluated_on" — a method is typically benchmarked on a specific dataset.
+  * "is_based_on" — a class of approaches builds on a foundational method.
+- Only extract if the abstract makes a clear, general claim about what the field does (e.g., "NLP techniques are used for suicide risk detection").
+- Do not extract vague domain-to-domain claims like "NLP addresses medicine".
+- Prefer specific technical entities even in reviews.
 
 ENTITY CONSTRAINTS:
 - Subject and object must each be a specific scientific concept:
@@ -87,7 +98,6 @@ Reject:
 
 Prefer:
 "NLP model detects suicide risk"
-
 
 RELATION VALIDATION:
 - Only use:

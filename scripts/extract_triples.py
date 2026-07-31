@@ -18,7 +18,7 @@ from scripts.config import (
 
 # Model GPT-5.5 của OpenAI (thay cho OLLAMA_MODEL trước đây).
 # Có thể override bằng biến môi trường OPENAI_MODEL hoặc --model.
-DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.5")
+DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "w3leee/CodeX GPT 5.5")
 
 # Endpoint trung gian (proxy) thay vì api.openai.com mặc định.
 # Có thể override bằng biến môi trường OPENAI_BASE_URL hoặc --base-url.
@@ -86,30 +86,50 @@ def load_checkpoint(checkpoint_path: Path) -> list:
 
 
 def extract_from_abstract(abstract: str, year: int, prompt_template: str, model: str, client,
-                           max_retries: int = 3, debug: bool = False) -> list:
+                           max_retries: int = 3, debug: bool = False, max_tokens: int = 2000) -> list:
     prompt = prompt_template.format(year=year, abstract=abstract)
 
     if debug:
         print(f"  [DEBUG] abstract length: {len(abstract or '')} chars")
-        print(f"  [DEBUG] prompt preview:\n{prompt[:500]}")
+        print(f"  [DEBUG] ===== FULL PROMPT START =====")
+        print(prompt)
+        print(f"  [DEBUG] ===== FULL PROMPT END =====")
 
     last_error = None
+    current_max_tokens = max_tokens
+
     for attempt in range(1, max_retries + 1):
         try:
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0,        # deterministic output, giảm drift
-                max_tokens=800,       # tránh bị cắt giữa JSON với output dài
+                max_tokens=current_max_tokens,
             )
-            raw_text = response.choices[0].message.content
+            choice = response.choices[0]
+            raw_text = choice.message.content
+            finish_reason = choice.finish_reason
 
             if debug:
-                print(f"  [DEBUG] finish_reason: {response.choices[0].finish_reason}")
+                print(f"  [DEBUG] finish_reason: {finish_reason} | max_tokens used: {current_max_tokens}")
                 print(f"  [DEBUG] raw_text repr: {raw_text!r}")
 
+            # Trường hợp điển hình của reasoning model (vd Grok qua proxy này):
+            # model "nghĩ" trong reasoning_content và ăn hết max_tokens trước khi
+            # kịp sinh ra JSON trả lời -> content = None, finish_reason = "length".
+            # Cách xử lý: tăng max_tokens lên và thử lại, thay vì bỏ qua bài.
             if not raw_text:
-                print("  [WARNING] Model trả về content rỗng (None/'').")
+                if finish_reason == "length":
+                    reasoning_len = 0
+                    try:
+                        reasoning_len = len(choice.message.reasoning_content or "")
+                    except AttributeError:
+                        pass
+                    print(f"  [WARNING] Bị cắt giữa chừng do reasoning ăn hết token "
+                          f"(reasoning_content ~{reasoning_len} ký tự). Tăng max_tokens và thử lại...")
+                    current_max_tokens = min(current_max_tokens * 2, 8000)
+                    continue
+                print("  [WARNING] Model trả về content rỗng (None/'') không rõ lý do.")
                 if debug:
                     print(f"  [DEBUG] full response object: {response}")
                 return []
@@ -160,6 +180,10 @@ def main() -> None:
                          help="Bỏ qua checkpoint cũ, chạy lại từ đầu (mặc định sẽ tự resume nếu có checkpoint).")
     parser.add_argument("--debug", action="store_true",
                          help="In chi tiết abstract, prompt, raw response để debug vì sao ra 0 quadruples.")
+    parser.add_argument("--max-tokens", type=int, default=2000,
+                         help="Ngân sách token cho completion (mặc định 2000). "
+                              "Reasoning model như model đứng sau proxy này 'suy nghĩ' trong cùng ngân sách này, "
+                              "nên cần để cao hơn nhiều so với model thường.")
     args = parser.parse_args()
 
     checkpoint_path = args.checkpoint or default_checkpoint_path(args.output)
@@ -204,7 +228,7 @@ def main() -> None:
 
             try:
                 quads = extract_from_abstract(paper["abstract"], paper["year"], prompt_template, args.model, client,
-                                               debug=args.debug)
+                                               debug=args.debug, max_tokens=args.max_tokens)
             except Exception as e:
                 # Lỗi nghiêm trọng (vd hết quota): lưu checkpoint rồi dừng hẳn, không chạy tiếp
                 print(f"[FATAL] Dừng chạy do lỗi: {e}")

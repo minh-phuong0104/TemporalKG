@@ -14,38 +14,38 @@ from scripts.config import (
     QUADRUPLES_FILE,
 )
 
-# GPT-5.5 qua xah.io
+
 DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.5")
 
 
 def clean_json_text(raw: str) -> str:
-    """Remove markdown code block if model returns ```json ... ```."""
     text = raw.strip()
 
     if text.startswith("```"):
         text = text.strip("`")
-        text = text.replace("json", "", 1).strip()
+        if text.startswith("json"):
+            text = text[4:].strip()
 
     return text
 
 
 def load_prompt_template(prompt_file: Path) -> str:
     if not prompt_file.exists():
-        raise FileNotFoundError(f"Prompt file not found: {prompt_file}")
+        raise FileNotFoundError(
+            f"Prompt file not found: {prompt_file}"
+        )
 
     return prompt_file.read_text(encoding="utf-8")
 
 
 def get_openai_client():
-    """Create xah.io OpenAI-compatible client."""
     from openai import OpenAI
 
     api_key = os.environ.get("OPENAI_API_KEY")
 
     if not api_key:
         raise RuntimeError(
-            "Missing OPENAI_API_KEY. "
-            "Run: export OPENAI_API_KEY='your_key'"
+            "Missing OPENAI_API_KEY"
         )
 
     return OpenAI(
@@ -67,27 +67,34 @@ def extract_from_abstract(
         abstract=abstract
     )
 
-    response = client.responses.create(
+    response = client.chat.completions.create(
         model=model,
-        input=prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        temperature=0,
+        max_tokens=800,
     )
 
-    raw_text = response.output_text
+    raw_text = response.choices[0].message.content
+
     cleaned = clean_json_text(raw_text)
 
     try:
-        parsed = json.loads(cleaned)
+        result = json.loads(cleaned)
 
-        if not isinstance(parsed, list):
-            print("  [WARNING] Model output is not JSON list.")
+        if not isinstance(result, list):
             return []
 
-        return parsed
+        return result
 
     except json.JSONDecodeError:
         print(
-            f"  [WARNING] Invalid JSON output:\n"
-            f"{raw_text[:300]}"
+            "[WARNING] Invalid JSON:",
+            raw_text[:300]
         )
         return []
 
@@ -95,7 +102,7 @@ def extract_from_abstract(
 def main():
 
     parser = argparse.ArgumentParser(
-        description="Extract temporal KG quadruples with GPT-5.5 via xah.io."
+        description="Extract temporal KG quadruples with GPT-5.5"
     )
 
     parser.add_argument(
@@ -124,8 +131,7 @@ def main():
     parser.add_argument(
         "--limit",
         type=int,
-        default=DEFAULT_EXTRACT_LIMIT,
-        help="Max papers. Use 0 for all."
+        default=DEFAULT_EXTRACT_LIMIT
     )
 
     args = parser.parse_args()
@@ -135,11 +141,13 @@ def main():
         papers = json.load(f)
 
 
-    if args.limit and args.limit > 0:
+    if args.limit > 0:
         papers = papers[:args.limit]
 
 
-    prompt_template = load_prompt_template(args.prompt)
+    prompt_template = load_prompt_template(
+        args.prompt
+    )
 
     client = get_openai_client()
 
@@ -149,7 +157,9 @@ def main():
     for i, paper in enumerate(papers, 1):
 
         print("=" * 60)
-        print(f"[{i}/{len(papers)}] {paper['title']}")
+        print(
+            f"[{i}/{len(papers)}] {paper['title']}"
+        )
         print("=" * 60)
 
 
@@ -171,14 +181,12 @@ def main():
 
         for q in quads:
             print(
-                f"  {q['subject']} "
-                f"--[{q['relation']}]--> "
-                f"{q['object']} "
-                f"({q['year']})"
+                f"{q['subject']} --[{q['relation']}]--> {q['object']} ({q['year']})"
             )
 
 
         all_quadruples.extend(quads)
+
 
 
     args.output.parent.mkdir(
@@ -187,7 +195,12 @@ def main():
     )
 
 
-    with open(args.output, "w", encoding="utf-8") as f:
+    with open(
+        args.output,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
         json.dump(
             all_quadruples,
             f,
@@ -197,12 +210,13 @@ def main():
 
 
     print(
-        f"\nExtracted {len(all_quadruples)} quadruples "
-        f"from {len(papers)} papers."
+        f"\nExtracted {len(all_quadruples)} quadruples from {len(papers)} papers."
     )
 
-    print("Saved to", args.output)
-
+    print(
+        "Saved to",
+        args.output
+    )
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ from scripts.config import (
 
 # Model GPT-5.5 của OpenAI (thay cho OLLAMA_MODEL trước đây).
 # Có thể override bằng biến môi trường OPENAI_MODEL hoặc --model.
-DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "3h15pm/CodeX GPT-5.5")
+DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.5")
 
 # Endpoint trung gian (proxy) thay vì api.openai.com mặc định.
 # Có thể override bằng biến môi trường OPENAI_BASE_URL hoặc --base-url.
